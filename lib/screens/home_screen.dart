@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
-import '../services/weather_service.dart'; // Import Service
-import '../models/weather_info.dart'; // Import Model
+import 'package:intl/intl.dart';
+
+import '../services/weather_service.dart';
+import '../models/weather_info.dart';
+import '../utils/demo_data.dart';
+import '../models/diary_entry.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -10,135 +14,224 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // We store the Future so we don't fetch weather on every tiny UI rebuild
   late Future<WeatherInfo> _weatherFuture;
+  DiaryEntry? _latestEntry;
 
   @override
   void initState() {
     super.initState();
-    // Start fetching weather as soon as the screen loads
     _weatherFuture = WeatherService().getCurrentWeather();
+    _loadLatestEntry();
+  }
+
+  void _loadLatestEntry() {
+    final entries = DemoData.getEntries();
+
+    if (entries.isNotEmpty) {
+      entries.sort((a, b) => b.date.compareTo(a.date));
+      setState(() {
+        _latestEntry = entries.first;
+      });
+    } else {
+      setState(() {
+        _latestEntry = null;
+      });
+    }
+  }
+
+  Future<void> _goToAddDiary() async {
+    await Navigator.pushNamed(context, '/add_diary');
+    _loadLatestEntry(); // refresh after return
+  }
+
+  Future<void> _goToDiaryList() async {
+    await Navigator.pushNamed(context, '/diary_list');
+    _loadLatestEntry(); // refresh after return
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("CloudyLog Home"),
+        backgroundColor: Colors.white,
+        elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout, color: Colors.black54),
             onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
           ),
         ],
       ),
-      body: Center(
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // FutureBuilder handles the 3 states: Loading, Error, Success
-            FutureBuilder<WeatherInfo>(
-              future: _weatherFuture,
-              builder: (context, snapshot) {
-                // 1. Loading State
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Column(
-                    children: [
-                      CircularProgressIndicator(),
-                      SizedBox(height: 10),
-                      Text("Fetching Weather..."),
-                    ],
-                  );
-                }
-                // 2. Error State
-                else if (snapshot.hasError) {
-                  return Column(
-                    children: [
-                      const Icon(
-                        Icons.error_outline,
-                        color: Colors.red,
-                        size: 50,
+            // 1. Header Section (Greeting + Weather)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                // Greeting
+                const Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Hi Suhana!",
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF483D8B),
                       ),
-                      const SizedBox(height: 10),
-                      Text(
-                        "Could not load weather.\n(Check location permissions)",
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.red.shade700),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          setState(() {
-                            _weatherFuture = WeatherService()
-                                .getCurrentWeather();
-                          });
-                        },
-                        child: const Text("Retry"),
-                      ),
-                    ],
-                  );
-                }
-                // 3. Success State
-                else if (snapshot.hasData) {
-                  final weather = snapshot.data!;
-                  return Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade100,
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.3),
-                          blurRadius: 5,
-                          offset: const Offset(0, 3),
-                        ),
-                      ],
                     ),
-                    child: Column(
-                      children: [
-                        // Get the real icon from OpenWeather's website
-                        Image.network(
-                          "https://openweathermap.org/img/wn/${weather.iconCode}@2x.png",
-                          width: 100,
-                          height: 100,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(
-                                Icons.cloud,
-                                size: 80,
-                                color: Colors.grey,
+                    SizedBox(height: 5),
+                    Text(
+                      "How is your day?",
+                      style: TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                  ],
+                ),
+
+                // Weather Card
+                FutureBuilder<WeatherInfo>(
+                  future: _weatherFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.hasData) {
+                      final w = snapshot.data!;
+                      return Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE0F7FA),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          children: [
+                            Image.network(
+                              "https://openweathermap.org/img/wn/${w.iconCode}.png",
+                              width: 60,
+                              height: 60,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.wb_sunny,
+                                color: Colors.orange,
                               ),
+                            ),
+                            Text(
+                              "${w.temperature.toStringAsFixed(0)}°C",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
-                        Text(
-                          "${weather.temperature.toStringAsFixed(1)}°C",
-                          style: const TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          "${weather.condition} in ${weather.cityName}",
-                          style: const TextStyle(fontSize: 16),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-                return const Text("No Data");
-              },
+                      );
+                    }
+                    return const SizedBox(
+                      width: 60,
+                      height: 60,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    );
+                  },
+                ),
+              ],
             ),
 
             const SizedBox(height: 40),
 
-            // Navigation Buttons
-            ElevatedButton.icon(
-              icon: const Icon(Icons.book),
-              label: const Text("View Diary Entries"),
-              onPressed: () => Navigator.pushNamed(context, '/diary_list'),
+            // 2. My Diary Section
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  "My Diary",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                TextButton(
+                  onPressed: _goToDiaryList,
+                  child: const Text("View All Diaries"),
+                ),
+              ],
             ),
+
             const SizedBox(height: 10),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.add),
-              label: const Text("Add New Entry"),
-              onPressed: () => Navigator.pushNamed(context, '/add_diary'),
+
+            // 3. Diary Preview
+            if (_latestEntry != null)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFF0F5),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.pink.shade50),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          DateFormat('MMM d').format(_latestEntry!.date),
+                          style: TextStyle(
+                            color: Colors.pink.shade300,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Icon(Icons.mood, color: Colors.pink.shade300, size: 20),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      _latestEntry!.title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      _latestEntry!.content,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(color: Colors.black54),
+                    ),
+                  ],
+                ),
+              )
+            else
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(30),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: const Center(
+                  child: Text("No memories yet. Start writing!"),
+                ),
+              ),
+
+            const SizedBox(height: 20),
+
+            // 4. Write New Entry Button
+            SizedBox(
+              width: double.infinity,
+              height: 55,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF9370DB),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
+                  elevation: 2,
+                ),
+                onPressed: _goToAddDiary,
+                child: const Text(
+                  "Write New Entry",
+                  style: TextStyle(color: Colors.white, fontSize: 16),
+                ),
+              ),
             ),
           ],
         ),

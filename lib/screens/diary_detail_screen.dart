@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart'; // Add this for date formatting
+import '../models/diary_entry.dart';
 
 class DiaryDetailScreen extends StatelessWidget {
-  const DiaryDetailScreen({super.key});
+  final DiaryEntry entry; // Ensure this is stored
+
+  const DiaryDetailScreen({super.key, required this.entry});
 
   @override
   Widget build(BuildContext context) {
-    // In the real app, we will pass the DiaryEntry object here.
-    // For now, we hardcode the data.
-
     return Scaffold(
-      appBar: AppBar(title: const Text("Oct 20, 2023")),
+      // Use real date
+      appBar: AppBar(title: Text(DateFormat('MMM d, yyyy').format(entry.date))),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -23,31 +25,36 @@ class DiaryDetailScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: Colors.blue.shade100),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.wb_sunny, color: Colors.orange),
-                  SizedBox(width: 10),
+                  Image.network(
+                    "https://openweathermap.org/img/wn/${entry.weather.iconCode}.png",
+                    width: 40,
+                    errorBuilder: (_, __, ___) =>
+                        const Icon(Icons.wb_sunny, color: Colors.orange),
+                  ),
+                  const SizedBox(width: 10),
                   Text(
-                    "25°C - Sunny",
-                    style: TextStyle(fontWeight: FontWeight.bold),
+                    // Use real weather data
+                    "${entry.weather.temperature.toStringAsFixed(1)}°C - ${entry.weather.condition}",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 20),
 
-            // Diary Title
-            const Text(
-              "My Great Day",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            // Diary Title (Real Data)
+            Text(
+              entry.title,
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
 
-            // Diary Content
-            const Text(
-              "Today was amazing because I finally started my Flutter project. "
-              "The weather was perfect for coding outside...",
-              style: TextStyle(fontSize: 16, height: 1.5),
+            // Diary Content (Real Data)
+            Text(
+              entry.content,
+              style: const TextStyle(fontSize: 16, height: 1.5),
             ),
           ],
         ),

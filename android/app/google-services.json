@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "98577490538",
+    "project_id": "cloudylog-3da48",
+    "storage_bucket": "cloudylog-3da48.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:98577490538:android:1948aa27d7b345c5f12013",
+        "android_client_info": {
+          "package_name": "com.example.cloudlog"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD-KomcaWiCbZenYaxyRNQDhr2pUhUk024"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

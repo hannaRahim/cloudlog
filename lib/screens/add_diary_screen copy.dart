@@ -34,7 +34,6 @@ class _AddDiaryScreenState extends State<AddDiaryScreen> {
   }
 
   void _saveEntry() {
-    // 1. Validation
     if (_titleController.text.isEmpty || _contentController.text.isEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -49,7 +48,6 @@ class _AddDiaryScreenState extends State<AddDiaryScreen> {
       return;
     }
 
-    // 2. Create Entry Object
     final newEntry = DiaryEntry(
       userId: 'demo_user',
       title: _titleController.text,
@@ -58,49 +56,9 @@ class _AddDiaryScreenState extends State<AddDiaryScreen> {
       weather: _currentWeather!,
     );
 
-    // 3. Save to local DemoData
+    // Save to local DemoData
     DemoData.addEntry(newEntry);
-
-    // --- NEW POPUP LOGIC STARTS HERE ---
-
-    // Show Success Dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false, // User cannot click outside to close
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.check_circle, color: Colors.green, size: 60),
-              const SizedBox(height: 20),
-              const Text(
-                "Entry saved successfully",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        );
-      },
-    );
-
-    // Wait 3 seconds, then navigate back
-    Future.delayed(const Duration(seconds: 3), () {
-      if (mounted) {
-        // 1. Close the Dialog
-        Navigator.of(context).pop();
-
-        // 2. Navigate back to previous screen (Home or List)
-        // We pass 'true' to tell the previous screen to refresh
-        Navigator.of(context).pop(true);
-      }
-    });
-
-    // --- NEW POPUP LOGIC ENDS HERE ---
+    Navigator.pop(context, true);
   }
 
   @override
